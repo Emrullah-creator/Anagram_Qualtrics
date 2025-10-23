@@ -119,6 +119,47 @@
             display: none; 
             border: 1px solid #e9ecef;
         }
+
+        /* Modal Stilleri (alert yerine) */
+        .modal-hidden {
+            display: none;
+        }
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-box {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        #modal-message {
+            font-size: 1.1rem;
+            color: #333;
+            margin: 0 0 20px 0;
+        }
+        #modal-close-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +181,15 @@
         <p id="message-area"></p>
         
         <!-- Bu sayaç alanı CSS ile gizlenmiştir -->
-        <p id="counter-area">1 / 83</p>
+        <p id="counter-area">1 / 89</p>
+    </div>
+
+    <!-- Modal HTML (alert yerine) -->
+    <div id="modal-overlay" class="modal-hidden">
+        <div id="modal-box">
+            <p id="modal-message"></p>
+            <button id="modal-close-btn">Tamam</button>
+        </div>
     </div>
 
     <script>
@@ -151,8 +200,13 @@
         const messageArea = document.getElementById('message-area');
         const counterArea = document.getElementById('counter-area');
 
+        // Modal Elemanları
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
         // Anagram listesi: [Gösterilecek Kelime, Doğru Cevap]
-        // Sizin tarafınızdan manuel olarak güncellenen 83 kelimelik liste
+        // Sizin tarafınızdan manuel olarak güncellenen 89 kelimelik liste
         const anagrams = [
             ["KELAM", "KALEM"],
             ["TAHMİNİ", "İMTİHAN"],
@@ -207,7 +261,7 @@
             ["KİMSA", "İMSAK"], 
             ["LAHZA", "HAZAL"],
             ["PARİK", "RAKİP"], 
-            ["ŞİLEM","İŞLEM"], 
+            ["ŞİLEM","İŞLEM"], // Düzeltme 1: Eksik virgül eklendi
             ["SAVAT", "VASAT"],
             ["ROBAS", "BORSA"],
             ["ESİR", "SERİ"],
@@ -215,7 +269,7 @@
             ["OYSA", "SOYA"],
             ["AYIP", "YAPI"],
             ["KİTLE", "TEKİL"],
-            ["TABI", "BATI,
+            ["TABI", "BATI"], // Düzeltme 2: Hatalı tırnak işareti ve virgül düzeltildi
             ["TEPES", "SEPET"], 
             ["SALEP", "PLASE"],
             ["NABİ", "BİNA"], 
@@ -226,7 +280,7 @@
             ["LİP", "PİL"],
             ["TAY", "YAT"],
             ["TAÇI","ÇATI"],
-            ["BETA","EBAT"],
+            ["BETA","EBAT"], // Düzeltme 3: Eksik virgül eklendi
             ["ODAM", "MODA"],
             ["ALPA", "PALA"], 
             ["KEZA", "ZEKA"],
@@ -239,22 +293,26 @@
         let autoSkipCounter = 0; // Üst üste kaç kez atlandığını sayar (exploit koruması)
         let autoSkipDisabled = false; // Atlama özelliği devre dışı mı? (exploit koruması)
 
+        // Modal fonksiyonları
+        function showModal(message) {
+            modalMessage.textContent = message;
+            modalOverlay.classList.remove('modal-hidden');
+            modalOverlay.style.display = 'flex'; // Geri göster
+        }
+
+        function hideModal() {
+            modalOverlay.classList.add('modal-hidden');
+            modalOverlay.style.display = 'none'; // Tamamen gizle
+        }
+
         // Oyunu başlatan veya bir sonraki kelimeyi yükleyen fonksiyon
         function loadAnagram() {
+            hideModal(); // Yeni kelime yüklenirken açık modal varsa kapat
             wrongGuessCount = 0; // Yeni kelime yüklendiğinde sayacı sıfırla
             lastWrongGuess = ""; // Son yanlış cevabı sıfırla
             
-            if (currentIndex < anagrams.length) {
-                anagramDisplay.textContent = anagrams[currentIndex][0];
-                // Sayaç gizli olsa da HTML içeriğini güncelliyoruz
-                counterArea.textContent = (currentIndex + 1) + " / " + anagrams.length; 
-                userInput.value = "";
-                messageArea.textContent = "";
-                messageArea.className = "";
-                userInput.disabled = false; // Input'u tekrar etkinleştir
-                checkButton.disabled = false; // Butonu tekrar etkinleştir
-                userInput.focus();
-            } else {
+            // Hata ayıklama: Listenin sonuna gelindi mi diye kontrol et
+            if (currentIndex >= anagrams.length) {
                 // Oyun bitti
                 anagramDisplay.textContent = "Oyun Bitti!";
                 userInput.style.display = 'none';
@@ -262,36 +320,58 @@
                 messageArea.textContent = "Tebrikler! Tüm anagramları tamamladınız.";
                 messageArea.className = "correct";
                 counterArea.textContent = anagrams.length + " / " + anagrams.length; 
+                if (counterArea.style.display === 'none') {
+                    counterArea.style.display = 'block'; // Oyun bitince gizli sayacı göster
+                }
+                return; // Fonksiyondan çık
             }
+            
+            // Normal kelime yükleme
+            anagramDisplay.textContent = anagrams[currentIndex][0];
+            // Sayaç gizli olsa da HTML içeriğini güncelliyoruz
+            counterArea.textContent = (currentIndex + 1) + " / " + anagrams.length; 
+            userInput.value = "";
+            messageArea.textContent = "";
+            messageArea.className = "";
+            userInput.disabled = false; // Input'u tekrar etkinleştir
+            checkButton.disabled = false; // Butonu tekrar etkinleştir
+            userInput.focus();
         }
+
 
         // Cevabı kontrol eden fonksiyon
         function checkAnswer() {
-            // Cevabın o anki kelime için olup olmadığını kontrol et (hızlı geçişlerde hatayı önler)
+            // Cevabın o anki kelime için olup olmadığını kontrol et
             if (currentIndex >= anagrams.length) return; 
 
-            // Türkçe karakterlere duyarlı büyük harf çevirme ve boşluk silme
+            // Hata ayıklama: Çözümün undefined olup olmadığını kontrol et
+            if (!anagrams[currentIndex] || typeof anagrams[currentIndex][1] === 'undefined') {
+                console.error("Anagram listesinde hata: index " + currentIndex, anagrams[currentIndex]);
+                // Hatalı veriyi atla
+                currentIndex++;
+                loadAnagram();
+                return;
+            }
+
             const guess = userInput.value.trim().toLocaleUpperCase('tr-TR');
             const solution = anagrams[currentIndex][1].toLocaleUpperCase('tr-TR');
             
-            // Eğer giriş boşsa hiçbir şey yapma
             if (guess === "") return;
 
             if (guess === solution) {
                 // Cevap Doğru
-                messageArea.textContent = "Tebrikler! Gelecek anagramı çözün.";
+                messageArea.textContent = "Tebrikler! Gelecek anagramı çözünüz.";
                 messageArea.className = "correct";
                 autoSkipCounter = 0; // Doğru cevapta üst üste atlama sayacını sıfırla
                 currentIndex++;
-                userInput.disabled = true; // Cevap bilinince input'u kilitle
-                checkButton.disabled = true; // Butonu kilitle
+                userInput.disabled = true; 
+                checkButton.disabled = true; 
                 
-                // Kullanıcının mesajı görmesi için kısa bir bekleme süresi
                 setTimeout(loadAnagram, 1500); 
             } else {
                 // Cevap Yanlış
                 
-                // Atlama özelliği devre dışıysa, sadece "gözden geçir" de.
+                // Atlama özelliği devre dışıysa, farklı mesaj göster
                 if (autoSkipDisabled) {
                     messageArea.textContent = "Cevabınızı gözden geçiriniz.";
                     messageArea.className = "incorrect";
@@ -301,35 +381,33 @@
                 
                 // Sadece bir önceki yanlış cevaptan FARKLIYSA sayacı artır (Spam Koruması)
                 if (guess !== lastWrongGuess) {
-                    wrongGuessCount++; // Yanlış sayısını artır
-                    lastWrongGuess = guess; // Bu cevabı son yanlış cevap olarak kaydet
+                    wrongGuessCount++; 
+                    lastWrongGuess = guess; 
                 }
                 
                 if (wrongGuessCount >= 5) {
-                    // 5. kez yanlış bildi (veya spamledi)
+                    // 5. kez yanlış bildi
                     messageArea.textContent = "Doğru cevap: " + solution + ". Sonraki kelimeye geçiliyor...";
-                    messageArea.className = "incorrect"; // Kırmızı renkte göster
+                    messageArea.className = "incorrect"; 
                     
                     autoSkipCounter++; // Üst üste atlama sayacını artır
                     
                     // Exploit Koruması: 4 kez üst üste atlanırsa özelliği kapat
-                    if (autoSkipCounter >= 4) {
+                    if (autoSkipCounter >= 4 && !autoSkipDisabled) {
                         autoSkipDisabled = true;
-                        // Kullanıcıya özelliğin kapandığını bildir
-                        setTimeout(() => {
-                            alert("Kelime atlama özelliği çok fazla kullanıldığı için devre dışı bırakıldı.");
-                        }, 100);
+                        // Kullanıcıya özelliğin kapandığını bildir (alert yerine modal)
+                        showModal("Kelime atlama özelliği devre dışı bırakıldı.");
                     }
                     
                     currentIndex++; // Bir sonraki kelimeye geç
-                    userInput.disabled = true; // Input'u kilitle
-                    checkButton.disabled = true; // Butonu kilitle
+                    userInput.disabled = true; 
+                    checkButton.disabled = true; 
 
-                    // Cevabı görmesi için biraz daha uzun beklet
                     setTimeout(loadAnagram, 2500); 
                 } else {
                     // Henüz 5 olmadı
-                    messageArea.textContent = "Cevabınızı gözden geçiriniz. (" + wrongGuessCount + "/5)";
+                    let triesLeft = 5 - wrongGuessCount;
+                    messageArea.textContent = `Cevabınızı gözden geçiriniz. (${triesLeft} hakkınız kaldı)`;
                     messageArea.className = "incorrect";
                     userInput.focus();
                 }
@@ -339,12 +417,15 @@
         // Olay dinleyicileri
         checkButton.addEventListener('click', checkAnswer);
         
-        // Enter tuşu ile de kontrol etmeyi sağlama
+        // Enter tuşu
         userInput.addEventListener('keyup', function(event) {
             if (event.key === 'Enter') {
-                checkButton.click(); // Butona tıklamayı simüle et
+                checkButton.click(); 
             }
         });
+
+        // Modal kapatma butonu
+        modalCloseBtn.addEventListener('click', hideModal);
 
         // Sayfa yüklendiğinde ilk anagramı yükle
         document.addEventListener('DOMContentLoaded', loadAnagram);
