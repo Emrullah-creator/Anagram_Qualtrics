@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anagram Oyunu</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #game-container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border-top: 5px solid #007bff;
+        }
+        h2 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        h3 {
+            font-weight: 400; /* Yazı tipini biraz incelttim */
+            color: #666; /* Rengi biraz daha açık yaptım */
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.1rem; /* Puntoyu küçülttüm */
+            margin-top: -5px; /* Ana başlığa yaklaştırdım */
+        }
+        /* h3'ten sonra gelen açıklama p etiketi (BU KURAL SİLİNECEK) */
+        #game-container > h3 + p {
+            font-size: 0.9rem; /* Puntoyu küçülttüm */
+            color: #777;
+            margin-top: -5px; /* h3'e yaklaştırdım */
+            margin-bottom: 25px; /* Anagram kutusundan ayırdım */
+        }
+        #anagram-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #d9534f;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #fdf6f6;
+            border-radius: 8px;
+            user-select: none;
+        }
+        #user-input {
+            width: calc(100% - 22px);
+            padding: 12px;
+            font-size: 1.2rem;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        #user-input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        #check-button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        #check-button:hover {
+            background-color: #0056b3;
+        }
+        #message-area {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 1.5em;
+        }
+        .correct {
+            color: #5cb85c;
+        }
+        .incorrect {
+            color: #d9534f;
+        }
+        #counter-area {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        /* Açıklama alanı için stil */
+        #game-description {
+            background-color: #fdfdfd;
+            padding: 15px 20px; /* İçeriye sığması için padding ayarlandı */
+            border-radius: 8px; /* Köşeler ayarlandı */
+            box-shadow: none; /* Gölge kaldırıldı */
+            width: 100%;
+            text-align: left;
+            margin-top: 15px; /* Ana başlıkla arasına boşluk koyar */
+            border-top: 3px solid #5cb85c; /* Yeşil üst çizgi inceltildi */
+            box-sizing: border-box; /* Kutu modelini düzelttim */
+        }
+        #game-description h3 {
+            color: #5cb85c;
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        #game-description p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h2>Anagram Oyunu</h2>
+        <!-- Açıklama kutusu buraya taşındı -->
+        <div id="game-description">
+            <h3>Anagram Nedir?</h3>
+            <p>Anagram oyununda size ipucu olarak verilen kelimenin harflerini kullanarak, ondan türetilen diğer kelimeyi bulmanız gerekmektedir.</p>
+        </div>
+        
+        <div id="anagram-display">KELİME</div>
+        
+        <input type="text" id="user-input" placeholder="Cevabınızı buraya yazın">
+        
+        <button id="check-button">Kontrol Et</button>
+        
+        <p id="message-area"></p>
+        
+        <p id="counter-area">1 / 20</p>
+    </div>
+
+    <!-- Oyun Açıklaması Buradan Kaldırıldı -->
+
+    <script>
+        // DOM Elemanlarını seçme
+        const anagramDisplay = document.getElementById('anagram-display');
+        const userInput = document.getElementById('user-input');
+        const checkButton = document.getElementById('check-button');
+        const messageArea = document.getElementById('message-area');
+        const counterArea = document.getElementById('counter-area');
+
+        // Anagram listesi: [Gösterilecek Kelime, Doğru Cevap]
+        // Liste 100 çifte çıkarıldı.
+        const anagrams = [
+            ["KELAM", "KALEM"],
+            ["TAHMİNİ", "İMTİHAN"],
+            ["MEKAN", "KEMAN"],
+            ["SARKIK", "KISRAK"],
+            ["ÇARIK", "KIRAÇ"],
+            ["PATİK", "KİTAP"],
+            ["KESRA", "ASKER"],
+            ["İÇSEM", "SEÇİM"],
+            ["ONARM", "ORMAN"],
+            ["ASMA", "MASA"],
+            ["İRKİTME", "KİREMİT"],
+            ["MESİNA", "SİNEMA"],
+            ["NAKİS", "SAKİN"],
+            ["KABIL", "BALIK"],
+            ["KREDA", "KADER"],
+            ["ÇELİK", "ÇİLEK"],
+            ["BOLAT", "TABLO"],
+            ["İRİŞ", "ŞİİR"],
+            ["RASIT", "SATIR"],
+            ["APORT", "RAPOR"],
+            ["KİBAR", "BAKİR"],
+            ["EVRİM", "VERİM"],
+            ["KASIR", "SARIK"],
+            ["AYNI", "AYİN"],
+            ["EZGİ", "GEZİ"],
+            ["MİLAT", "TALİM"],
+            ["LİMAN", "NAMLI"],
+            ["ROMAN", "NORMA"],
+            ["SANAT", "SATAN"],
+            ["TOPRAK", "OTOPARK"],
+            ["VATAN", "TAVAN"],
+            ["SİYER", "SEYİR"],
+            ["İSTEK", "KESİT"],
+            ["RÜYA", "UYAR"],
+            ["SİTEM", "İSMET"],
+            ["İSNAT", "SATİN"],
+            ["PALET", "TALEP"],
+            ["SÖKME", "KÖSEM"],
+            ["PASLI", "LAPİS"],
+            ["KASE", "SEKA"],
+            ["SEMA", "ESMA"],
+            ["FAKİR", "FARİK"],
+            ["İMAN", "AMİN"],
+            ["HAKİM", "İHKAM"],
+            ["MALİK", "KAMİL"],
+            ["MİRAS", "SARIM"],
+            ["NİCEL", "İNCEL"],
+            ["SEKİL", "KESİL"],
+            ["BAHİS", "SABİH"],
+            ["ATİK", "KATİ"],
+            ["BİLET", "BELİT"],
+            ["ESKİ", "SEKİ"],
+            ["KORAL", "KAROL"],
+            ["HİSAR", "SARİH"],
+            ["İSYAN", "SİYAN"],
+            ["MERAK", "KAMER"],
+            ["NİMET", "TEMİN"],
+            ["ROSTO", "TOROS"],
+            ["YASAL", "SALYA"],
+            ["ZAMAN", "AZMAN"],
+            ["TARİH", "İHTAR"],
+            ["ŞİMAL", "İSLAM"],
+            ["YEMİN", "NEYİM"],
+            ["AMEL", "ALEM"],
+            ["İMSAK", "KİMSA"],
+            ["LAHZA", "HAZAL"],
+            ["NAFİA", "AFİNA"],
+            ["RAKİP", "PARİK"],
+            ["ŞİLEM", "İŞLEM"],
+            ["VASAT", "SAVAT"],
+            ["BORSA", "ROBAS"],
+            ["DİKEN", "KENDİ"],
+            ["İLAÇ", "İCAL"],
+            ["ÇİLE", "İLEÇ"],
+            ["ESİR", "SERİ"],
+            ["ASIR", "SIRA"],
+            ["OYSA", "SOYA"],
+            ["AYIP", "YAPI"],
+            ["KİTLE", "TEKİL"],
+            ["TABİ", "BATİ"],
+            ["SEPET", "TEPES"],
+            ["SALEP", "PLASE"],
+            ["BİNA", "NABİ"],
+            ["BORA", "BARO"],
+            ["LAMA", "MALA"],
+            ["NAL", "LAN"],
+            ["OPAL", "POLA"],
+            ["PİL", "LİP"],
+            ["RAKI", "KARI"],
+            ["TAY", "YAT"],
+            ["ZİL", "LİZ"],
+            ["ÇATI", "TAÇI"],
+            ["EBAT", "BETA"],
+            ["ISIL", "SILI"],
+            ["MODA", "ODAM"],
+            ["PALA", "ALPA"],
+            ["ZEKA", "KEZA"],
+            ["VAY", "YAV"],
+            ["PİKE", "İPEK"],
+            ["OLTA", "TOLA"],
+            ["MOKA", "KOMA"],
+            ["KUPA", "PUKA"],
+            ["İNAT", "İTAN"],
+            ["GIDA", "DAĞI"],
+            ["FREN", "FERN"],
+            ["EVİN", "İVEN"],
+            ["CANİ", "İCAN"],
+            ["BALE", "BELA"]
+        ];
+
+        let currentIndex = 0;
+
+        // Oyunu başlatan veya bir sonraki kelimeyi yükleyen fonksiyon
+        function loadAnagram() {
+            if (currentIndex < anagrams.length) {
+                anagramDisplay.textContent = anagrams[currentIndex][0];
+                counterArea.textContent = (currentIndex + 1) + " / " + anagrams.length;
+                userInput.value = "";
+                messageArea.textContent = "";
+                messageArea.className = "";
+                userInput.focus();
+            } else {
+                // Oyun bitti
+                anagramDisplay.textContent = "Oyun Bitti!";
+                userInput.style.display = 'none';
+                checkButton.style.display = 'none';
+                messageArea.textContent = "Tebrikler! Tüm anagramları tamamladınız.";
+                messageArea.className = "correct";
+                counterArea.textContent = "";
+            }
+        }
+
+        // Cevabı kontrol eden fonksiyon
+        function checkAnswer() {
+            // Türkçe karakterlere duyarlı büyük harf çevirme ve boşluk silme
+            const guess = userInput.value.trim().toLocaleUpperCase('tr-TR');
+            const solution = anagrams[currentIndex][1].toLocaleUpperCase('tr-TR');
+
+            if (guess === solution) {
+                // Cevap Doğru
+                messageArea.textContent = "Tebrikler! Gelecek anagramı çözün.";
+                messageArea.className = "correct";
+                currentIndex++;
+                
+                // Kullanıcının mesajı görmesi için kısa bir bekleme süresi
+                setTimeout(loadAnagram, 1500); 
+            } else {
+                // Cevap Yanlış
+                messageArea.textContent = "Cevabınızı gözden geçiriniz.";
+                messageArea.className = "incorrect";
+                userInput.focus();
+            }
+        }
+
+        // Olay dinleyicileri
+        checkButton.addEventListener('click', checkAnswer);
+        
+        // Enter tuşu ile de kontrol etmeyi sağlama
+        userInput.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Sayfa yüklendiğinde ilk anagramı yükle
+        document.addEventListener('DOMContentLoaded', loadAnagram);
+
+    </script>
+
+</body>
+</html>
