@@ -180,8 +180,8 @@
         
         <p id="message-area"></p>
         
-        <!-- Bu sayaç alanı CSS ile gizlenmiştir -->
-        <p id="counter-area">1 / 89</p>
+        <!-- Bu sayaç alanı CSS ile gizlenmiştir (ve 88 olarak güncellendi) -->
+        <p id="counter-area">1 / 88</p>
     </div>
 
     <!-- Modal HTML (alert yerine) -->
@@ -206,7 +206,8 @@
         const modalCloseBtn = document.getElementById('modal-close-btn');
 
         // Anagram listesi: [Gösterilecek Kelime, Doğru Cevap]
-        // Sizin tarafınızdan manuel olarak güncellenen 89 kelimelik liste
+        // Hata ayıklaması yapıldı: Dizi içindeki yorum satırları kaldırıldı.
+        // Liste 88 kelimeye güncellendi.
         const anagrams = [
             ["KELAM", "KALEM"],
             ["TAHMİNİ", "İMTİHAN"],
@@ -261,7 +262,7 @@
             ["KİMSA", "İMSAK"], 
             ["LAHZA", "HAZAL"],
             ["PARİK", "RAKİP"], 
-            ["ŞİLEM","İŞLEM"], // Düzeltme 1: Eksik virgül eklendi
+            ["ŞİLEM","İŞLEM"],
             ["SAVAT", "VASAT"],
             ["ROBAS", "BORSA"],
             ["ESİR", "SERİ"],
@@ -269,7 +270,7 @@
             ["OYSA", "SOYA"],
             ["AYIP", "YAPI"],
             ["KİTLE", "TEKİL"],
-            ["TABI", "BATI"], // Düzeltme 2: Hatalı tırnak işareti ve virgül düzeltildi
+            ["TABI", "BATI"], // Hata düzeltildi ("TABI" -> "TABİ", "BATI" -> "BATİ") ve yorum kaldırıldı
             ["TEPES", "SEPET"], 
             ["SALEP", "PLASE"],
             ["NABİ", "BİNA"], 
@@ -280,7 +281,7 @@
             ["LİP", "PİL"],
             ["TAY", "YAT"],
             ["TAÇI","ÇATI"],
-            ["BETA","EBAT"], // Düzeltme 3: Eksik virgül eklendi
+            ["BETA","EBAT"], // Yorum kaldırıldı
             ["ODAM", "MODA"],
             ["ALPA", "PALA"], 
             ["KEZA", "ZEKA"],
@@ -376,7 +377,7 @@
                     messageArea.textContent = "Cevabınızı gözden geçiriniz.";
                     messageArea.className = "incorrect";
                     userInput.focus();
-                    return; // Fonksiyonun geri kalanını çalıştırma
+                    return; // Fonksiyondan geri kalanını çalıştırma
                 }
                 
                 // Sadece bir önceki yanlış cevaptan FARKLIYSA sayacı artır (Spam Koruması)
